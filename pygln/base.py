@@ -48,7 +48,7 @@ class GLNBase(OnlineUpdateModel):
     def __init__(self,
                  layer_sizes: Sequence[int],
                  input_size: int,
-                 context_map_size: int = 4,
+                 context_map_size: Sequence[int],
                  num_classes: int = 2,
                  base_predictor: Optional[Callable] = None,
                  learning_rate: float = 1e-4,
@@ -64,7 +64,7 @@ class GLNBase(OnlineUpdateModel):
         assert input_size > 0
         self.input_size = input_size
 
-        assert context_map_size >= 2
+        assert len(layer_sizes) == len(context_map_size)
         self.context_map_size = context_map_size
 
         assert num_classes >= 2

@@ -160,7 +160,7 @@ class Linear():
         super().__init__()
 
         assert size > 0 and input_size > 0 and context_size > 0
-        assert context_map_size >= 2
+        # assert context_map_size >= 2
         assert num_classes >= 2
 
         self.num_classes = num_classes if num_classes > 2 else 1
@@ -192,11 +192,15 @@ class Linear():
                                                  keepdims=True)
         else:
             self._context_bias = 0.0
-        self._boolean_converter = np.array([[2**i]
-                                            for i in range(context_map_size)])
+        if context_map_size > 0:
+            self._boolean_converter = np.array([[2**i] for i in range(context_map_size)])
+        else:
+            self._boolean_converter = np.array([[1]])
         self._weights = np.full(shape=(self.num_classes, self.size,
                                        2**context_map_size, input_size),
-                                fill_value=1 / input_size)
+                                #fill_value=1 / input_size
+                                fill_value=0
+                                )
 
     def predict(self, logit, context, target=None):
         distances = np.matmul(self._context_maps, context.T)
@@ -266,7 +270,7 @@ class GLN(GLNBase):
     def __init__(self,
                  layer_sizes: Sequence[int],
                  input_size: int,
-                 context_map_size: int = 4,
+                 context_map_size: Sequence[int],
                  num_classes: int = 2,
                  base_predictor: Optional[
                      Callable[[np.ndarray], np.ndarray]] = None,
@@ -295,13 +299,13 @@ class GLN(GLNBase):
         else:
             raise ValueError('Invalid learning rate')
 
-        for size in self.layer_sizes:
-            layer = Linear(size, previous_size, self.input_size,
-                           self.context_map_size, self.num_classes,
+        for layerIndex in range(len(layer_sizes)):
+            layer = Linear(layer_sizes[layerIndex], previous_size, self.input_size,
+                           self.context_map_size[layerIndex], self.num_classes,
                            self.learning_rate, self.pred_clipping,
                            self.weight_clipping, self.bias, self.context_bias)
             self.layers.append(layer)
-            previous_size = size
+            previous_size = layer_sizes[layerIndex]
 
     def predict(self,
                 input: np.ndarray,
